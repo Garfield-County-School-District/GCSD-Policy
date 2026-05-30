@@ -633,7 +633,10 @@ app.post('/ai-search', async (req, res) => {
   try {
     const stream = anthropic.messages.stream({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 256,
+      // Enough room for the 2-4 sentence answer plus the trailing
+      // "POLICIES:" sentinel line; too small and the IDs get truncated,
+      // leaving the UI with no reference cards to render.
+      max_tokens: 512,
       system: [
         {
           type: 'text',

@@ -166,14 +166,27 @@ export type AISearchResult = { summary: string; policyIds: string[] };
 // Splits the streamed text into a user-visible summary and the trailing
 // "POLICIES: id1, id2" sentinel so the page can render the prose live.
 export function parseAISearchText(text: string): AISearchResult {
-  const match = text.match(/POLICIES:\s*([^\n]*)/i);
-  if (!match || match.index === undefined) {
+  // The model is instructed to end its reply with a literal uppercase
+  // "POLICIES:" sentinel. The prose above it often names policies inline
+  // ("the relevant policies: ..."), so match the LAST occurrence and require
+  // it to be uppercase — otherwise lowercase prose would truncate the summary
+  // and be mistaken for the ID list.
+  const regex = /POLICIES:\s*([^\n]*)/g;
+  let match: RegExpExecArray | null;
+  let last: RegExpExecArray | null = null;
+  while ((match = regex.exec(text)) !== null) {
+    last = match;
+  }
+  if (!last || last.index === undefined) {
     return { summary: text.trim(), policyIds: [] };
   }
-  const summary = text.slice(0, match.index).trim();
-  const policyIds = match[1]
+  const summary = text.slice(0, last.index).trim();
+  const policyIds = last[1]
     .split(',')
-    .map((s) => s.trim())
+    // Normalize: the policy context lists IDs as "[policy-ba]", so the model
+    // sometimes echoes brackets or trailing punctuation. Brackets are never
+    // part of an ID, so drop them outright, then trim stray punctuation.
+    .map((s) => s.replace(/[[\]]/g, '').replace(/^[.;,\s]+|[.;,\s]+$/g, ''))
     .filter(Boolean);
   return { summary, policyIds };
 }
