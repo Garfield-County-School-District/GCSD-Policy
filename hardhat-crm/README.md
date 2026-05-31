@@ -21,7 +21,22 @@ The pipeline and fields mirror Hard Hat's real funnel:
 - **Backend:** Supabase (Postgres + Auth + row-level security) — no custom server code
 - **Auth:** email/password for a small internal team
 
-## Setup
+## Live backend (already provisioned)
+
+A Supabase project is already set up and seeded:
+
+- **Project ref:** `vbzlxltvmjqoxrtunysk`
+- **API URL:** `https://vbzlxltvmjqoxrtunysk.supabase.co`
+- **Publishable key:** `sb_publishable_Pz2T9yU9t4xVcCck8aQNeA_v40mzz_C` (safe for the browser)
+- **Test login:** `admin@hardhat.test` / `hardhat123`
+
+These values are already in `.env` (gitignored). Just `npm install && npm run dev`.
+Manage the project at https://supabase.com/dashboard/project/vbzlxltvmjqoxrtunysk
+
+To add real team members: **Authentication → Users → Add user** (or change the
+test user's password). Then delete the `admin@hardhat.test` test account.
+
+## Setup (from scratch / new environment)
 
 ### 1. Create the Supabase project & schema
 
