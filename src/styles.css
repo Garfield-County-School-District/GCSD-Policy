@@ -21,7 +21,8 @@ button, input, textarea, select {
 .app-shell {
   display: grid;
   grid-template-columns: 320px 1fr;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -31,6 +32,7 @@ button, input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
 }
 
 .brand-title {
@@ -75,6 +77,7 @@ button, input, textarea, select {
 
 .content {
   padding: 32px;
+  overflow-y: auto;
 }
 
 .card {

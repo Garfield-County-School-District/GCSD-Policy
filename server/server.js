@@ -633,17 +633,17 @@ app.post('/ai-search', async (req, res) => {
   try {
     const stream = anthropic.messages.stream({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 256,
+      max_tokens: 1024,
       system: [
         {
           type: 'text',
           text: `You are a helpful assistant for Garfield County School District's policy management system. Staff ask you questions about district policies and you help them find relevant policies.
 
-Respond in TWO parts, in this exact order:
-1. A 2-4 sentence plain-English answer to the staff question, naming the relevant policies inline.
-2. On a new line at the very end, the literal token "POLICIES:" followed by a comma-separated list of relevant policy IDs (e.g. POLICIES: policy-001, policy-002). If no policies match, write "POLICIES:" with nothing after it.
+Respond in EXACTLY TWO parts with NO other text:
+1. A 2-4 sentence plain-English answer naming the relevant policies inline.
+2. A final line that MUST start with the exact token "POLICIES:" followed by a comma-separated list of the relevant policy IDs from the district policies list (e.g. POLICIES: policy-001, policy-002). You MUST always output this line, even if no policies match (write "POLICIES:" with nothing after it in that case).
 
-Do not use markdown, code blocks, or JSON. Only include policy IDs that are directly relevant.`,
+Do not use markdown, code blocks, or JSON. Always end your response with the POLICIES: line.`,
           cache_control: { type: 'ephemeral' },
         },
       ],
