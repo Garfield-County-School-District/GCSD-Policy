@@ -326,11 +326,10 @@ function saveFormsForPolicy(policyId, forms = []) {
 let policiesContextCache = null;
 
 function buildPoliciesContext() {
-  const policies = all('SELECT id, title, category, summary FROM policies ORDER BY title');
-  // Compact one-line-per-policy format. Less context = faster TTFT on the
-  // first request of a prompt-cache window. Format: "[id] title (category): summary"
+  const policies = all('SELECT id, title, summary FROM policies ORDER BY title');
+  // One line per policy: "[id] title: <summary truncated to 1000 chars>"
   return policies
-    .map((p) => `[${p.id}] ${p.title} (${p.category}): ${p.summary}`)
+    .map((p) => `[${p.id}] ${p.title}: ${(p.summary || '').slice(0, 1000)}`)
     .join('\n');
 }
 
@@ -608,6 +607,34 @@ app.delete('/policies/:id', requireAuth, requireRole(['admin']), (req, res) => {
   run('DELETE FROM policies WHERE id = ?', [req.params.id]);
   invalidatePoliciesContextCache();
   res.status(204).send();
+});
+
+app.post('/ai-generate-summary', requireAuth, requireRole(['editor', 'admin']), async (req, res) => {
+  const { content } = req.body;
+  if (!content?.trim()) {
+    return res.status(400).json({ message: 'content is required.' });
+  }
+  if (!anthropic) {
+    return res.status(503).json({ message: 'AI is not configured.' });
+  }
+
+  const plainText = content.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+
+  try {
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 350,
+      messages: [{
+        role: 'user',
+        content: `Summarize this school district policy in 2-4 sentences (under 1000 characters total). Be specific about what the policy requires, allows, or prohibits. Do not begin with "This policy" or "The policy". Do not use bullet points.\n\nPolicy text:\n${plainText.slice(0, 4000)}`,
+      }],
+    });
+    const summary = msg.content[0].text.trim().slice(0, 1000);
+    res.json({ summary });
+  } catch (err) {
+    console.error('AI summary error:', err);
+    res.status(500).json({ message: 'Failed to generate summary.' });
+  }
 });
 
 app.post('/ai-search', async (req, res) => {

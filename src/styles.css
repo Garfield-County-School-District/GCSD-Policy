@@ -233,6 +233,19 @@ textarea {
   max-width: 420px;
 }
 
+.field-hint {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.field-char-count {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: right;
+}
+
 .form-error {
   color: #b91c1c;
   background: #fef2f2;

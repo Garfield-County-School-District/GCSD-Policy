@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { generateSummary } from '../api';
 import type { Category, FormLink, Policy, PolicyForm } from '../types';
 import RichTextEditor from './RichTextEditor';
 
@@ -28,6 +29,7 @@ export default function PolicyEditor({ policy, categories, onSave, onDelete, can
   const [content, setContent] = useState(existingPolicy?.content ?? '');
   const [forms, setForms] = useState<FormLink[]>(existingPolicy?.forms ?? []);
   const [saving, setSaving] = useState(false);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
   const [actionError, setActionError] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -61,6 +63,20 @@ export default function PolicyEditor({ policy, categories, onSave, onDelete, can
       setActionError(err instanceof Error ? err.message : 'Failed to save policy.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleGenerateSummary = async () => {
+    if (!content.trim()) return;
+    setGeneratingSummary(true);
+    setActionError('');
+    try {
+      const generated = await generateSummary(content);
+      setSummary(generated);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to generate summary.');
+    } finally {
+      setGeneratingSummary(false);
     }
   };
 
@@ -127,8 +143,26 @@ export default function PolicyEditor({ policy, categories, onSave, onDelete, can
         </div>
 
         <div className="field-group">
-          <label className="field-label">Summary</label>
-          <textarea value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="Short summary of the policy" />
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 6 }}>
+            <label className="field-label" style={{ marginBottom: 0 }}>Summary</label>
+            <button
+              type="button"
+              className="secondary-button"
+              style={{ fontSize: 13, padding: '5px 12px', whiteSpace: 'nowrap' }}
+              onClick={handleGenerateSummary}
+              disabled={generatingSummary || !content.trim()}
+            >
+              {generatingSummary ? 'Generating…' : 'Generate AI Summary'}
+            </button>
+          </div>
+          <p className="field-hint">Fill in the Content field below first, then click Generate AI Summary to auto-fill this field. Summaries are limited to 1,000 characters.</p>
+          <textarea
+            value={summary}
+            onChange={(event) => setSummary(event.target.value)}
+            placeholder="Short summary of the policy"
+            maxLength={1000}
+          />
+          <p className="field-char-count">{summary.length} / 1,000</p>
         </div>
 
         <div className="field-group">

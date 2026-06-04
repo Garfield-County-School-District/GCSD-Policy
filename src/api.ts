@@ -161,6 +161,16 @@ export async function deleteUser(id: string) {
   }
 }
 
+export async function generateSummary(content: string): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/ai-generate-summary`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() } as HeadersInit,
+    body: JSON.stringify({ content }),
+  });
+  const data = await handleResponse<{ summary: string }>(response);
+  return data.summary;
+}
+
 export type AISearchResult = { summary: string; policyIds: string[] };
 
 // Splits the streamed text into a user-visible summary and the trailing
