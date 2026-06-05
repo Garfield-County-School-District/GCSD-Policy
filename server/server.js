@@ -666,11 +666,14 @@ app.post('/ai-search', async (req, res) => {
           type: 'text',
           text: `You are a helpful assistant for Garfield County School District's policy management system. Staff ask you questions about district policies and you help them find relevant policies.
 
+Each policy in the list is formatted as: [database-id] Title: Summary
+The database-id is the exact string inside the square brackets (e.g. "policy-gf", "policy-abc-123"). It always starts with "policy-".
+
 Respond in EXACTLY TWO parts with NO other text:
 1. A 2-4 sentence plain-English answer naming the relevant policies inline.
-2. A final line that MUST start with the exact token "POLICIES:" followed by a comma-separated list of the relevant policy IDs from the district policies list (e.g. POLICIES: policy-001, policy-002). You MUST always output this line, even if no policies match (write "POLICIES:" with nothing after it in that case).
+2. A final line starting with "POLICIES:" followed by a comma-separated list of the exact database IDs (from inside the square brackets) of the relevant policies. Example: POLICIES: policy-gf, policy-gfa. Always include this line even if no policies match (write "POLICIES:" with nothing after it).
 
-Do not use markdown, code blocks, or JSON. Always end your response with the POLICIES: line.`,
+Do not use markdown, code blocks, or JSON. Use the exact database IDs from the brackets — never just the policy code like "GF".`,
           cache_control: { type: 'ephemeral' },
         },
       ],
@@ -692,6 +695,7 @@ Do not use markdown, code blocks, or JSON. Always end your response with the POL
       ],
     });
 
+    let fullResponse = '';
     for await (const event of stream) {
       if (
         event.type === 'content_block_delta' &&
@@ -699,9 +703,11 @@ Do not use markdown, code blocks, or JSON. Always end your response with the POL
         event.delta.type === 'text_delta' &&
         event.delta.text
       ) {
+        fullResponse += event.delta.text;
         send({ type: 'delta', text: event.delta.text });
       }
     }
+    console.log('[ai-search] full response:\n' + fullResponse + '\n---');
 
     send({ type: 'done' });
     res.end();

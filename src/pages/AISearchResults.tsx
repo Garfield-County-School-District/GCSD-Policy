@@ -40,7 +40,8 @@ export default function AISearchResults({ query, policies, onClear }: Props) {
     return () => { cancelled = true; };
   }, [query]);
 
-  const parsed = parseAISearchText(streamedText);
+  const knownIds = policies.map((p) => p.id);
+  const parsed = parseAISearchText(streamedText, knownIds);
   const referenced = policies.filter((p) => parsed.policyIds.includes(p.id));
   const summaryText = parsed.summary || (done ? '' : 'Thinking…');
 

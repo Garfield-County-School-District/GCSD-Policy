@@ -175,16 +175,30 @@ export type AISearchResult = { summary: string; policyIds: string[] };
 
 // Splits the streamed text into a user-visible summary and the trailing
 // "POLICIES: id1, id2" sentinel so the page can render the prose live.
-export function parseAISearchText(text: string): AISearchResult {
+// Also normalises IDs: if the model returns bare codes like "GF" instead of
+// "policy-gf", prepend "policy-" and lowercase as a fallback.
+export function parseAISearchText(text: string, knownIds?: string[]): AISearchResult {
   const match = text.match(/POLICIES:\s*([^\n]*)/i);
   if (!match || match.index === undefined) {
     return { summary: text.trim(), policyIds: [] };
   }
   const summary = text.slice(0, match.index).trim();
-  const policyIds = match[1]
+  const raw = match[1]
     .split(',')
-    .map((s) => s.trim())
+    .map((s) => s.trim().replace(/[.;]+$/, ''))
     .filter(Boolean);
+
+  const policyIds = raw.map((id) => {
+    if (!knownIds) return id;
+    if (knownIds.includes(id)) return id;
+    const normalised = `policy-${id.toLowerCase()}`;
+    if (knownIds.includes(normalised)) return normalised;
+    // try replacing spaces/underscores with dashes
+    const dashed = `policy-${id.toLowerCase().replace(/[\s_]+/g, '-')}`;
+    if (knownIds.includes(dashed)) return dashed;
+    return id;
+  });
+
   return { summary, policyIds };
 }
 
