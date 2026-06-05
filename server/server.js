@@ -695,7 +695,6 @@ Do not use markdown, code blocks, or JSON. Use the exact database IDs from the b
       ],
     });
 
-    let fullResponse = '';
     for await (const event of stream) {
       if (
         event.type === 'content_block_delta' &&
@@ -703,11 +702,9 @@ Do not use markdown, code blocks, or JSON. Use the exact database IDs from the b
         event.delta.type === 'text_delta' &&
         event.delta.text
       ) {
-        fullResponse += event.delta.text;
         send({ type: 'delta', text: event.delta.text });
       }
     }
-    console.log('[ai-search] full response:\n' + fullResponse + '\n---');
 
     send({ type: 'done' });
     res.end();
