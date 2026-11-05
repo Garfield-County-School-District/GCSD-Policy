@@ -1,5 +1,7 @@
 import type { Policy } from '../types';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { downloadPolicyPdf } from '../utils/policyPdf';
 
 type PolicyViewerProps = {
   policy: Policy | null;
@@ -7,6 +9,21 @@ type PolicyViewerProps = {
 };
 
 export default function PolicyViewer({ policy, canEdit }: PolicyViewerProps) {
+  const [pdfBusy, setPdfBusy] = useState(false);
+
+  async function handleDownloadPdf() {
+    if (!policy || pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      await downloadPolicyPdf(policy);
+    } catch (err) {
+      console.error(err);
+      alert('Sorry, the PDF could not be created. Please try again.');
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   if (!policy) {
     return (
       <div className="card">
@@ -29,6 +46,9 @@ export default function PolicyViewer({ policy, canEdit }: PolicyViewerProps) {
               Edit policy
             </Link>
           )}
+          <button className="secondary-button" type="button" onClick={handleDownloadPdf} disabled={pdfBusy}>
+            {pdfBusy ? 'Preparing PDF…' : 'Download PDF'}
+          </button>
           <Link className="secondary-button" to={`/policies/${policy.id}/history`}>
             View history
           </Link>
